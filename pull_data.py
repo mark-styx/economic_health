@@ -53,8 +53,8 @@ class retrieve_data():
 
     def download_med_fam_income_data(self):
         #available range 1998-2019
-        start_year = 1998
-        for i in range(2020-start_year):
+        start_year = 1997
+        for i in range(2019-start_year):
             year = str(start_year + i)[-2:]
             url = 'https://www.ffiec.gov/xls/msa{0}inc.xls'.format(year)
             output = 'med_family_income_report{0}.xls'.format(year)
@@ -117,6 +117,7 @@ class preprocessing():
                 mfi['total'].append(total)
                 os.remove(f)
             except:
+                print('{0} was unable to load'.format(f))
                 pass
         mfi = pd.DataFrame(mfi,columns=['year','total'])
         mfi.to_csv('median_family_income.csv',index=False)
