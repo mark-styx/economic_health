@@ -153,7 +153,17 @@ class preprocessing():
         self.retail_trade()
         print('done.')
 
-
+@ex_time
+def convert_all_to_json():
+    files = glob('*.csv')
+    for f in files:
+        print('converting {0}...'.format(f))
+        df = pd.read_csv(f)
+        df.to_json(str(f).replace('.csv','.json'))
+        os.remove(f)
+        print('done.')
+    return
+    
 
 if __name__ == "__main__":
     @ex_time
@@ -161,5 +171,6 @@ if __name__ == "__main__":
         print('processing...')
         retrieve_data()
         preprocessing()
+        convert_all_to_json()
         print('run complete.')
     run()
