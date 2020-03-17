@@ -1,0 +1,17 @@
+git clone https://github.com/meow1928/economic_health.git
+cd economic_health
+python3 -m pip install xlrd
+#python3 -m pip install pandas
+#python3 -m pip install requests
+python3 pull_data.py
+
+files=/path/to/files/*.json
+for f in $files
+do
+    echo "loading $f to hdfs..."
+    hadoop fs -put f
+    echo "$f loaded"
+echo "done."
+done
+
+/home/mark/hadoop-3.2.1-src/spark/bin/pyspark
