@@ -159,7 +159,7 @@ def convert_all_to_json():
     for f in files:
         print('converting {0}...'.format(f))
         df = pd.read_csv(f)
-        df.to_json(str(f).replace('.csv','.json'))
+        df.to_json(str(f).replace('.csv','.json'),orient='records')
         os.remove(f)
         print('done.')
     return
