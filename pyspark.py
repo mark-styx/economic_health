@@ -76,85 +76,92 @@ def unstack(df,col_list):
 
 
 #operations
-if __name__ == "__main__":
-    data = build_df_dictionary()
-    dataframes = data.keys()
+data = build_df_dictionary()
+dataframes = data.keys()
 
-    #unstack g17
-    g17_col = data['g17_industrial_production_and_cap_utilization'].columns
-    g17_year_col = [x for x in g17_col if x.find('-') != -1]
-    g17 = unstack(data['g17_industrial_production_and_cap_utilization'],g17_year_col)
-    #summarize g17    
-    sqlContext.registerDataFrameAsTable(g17, "g17")
-    g17 = sqlContext.sql('''
-    select 
-        avg(amt) as g17,
-        cast(substring(year,1,4) as int) as year 
-    from g17 group by cast(substring(year,1,4) as int)''')
-    sqlContext.registerDataFrameAsTable(g17, "g17")
+#unstack g17
+g17_col = data['g17_industrial_production_and_cap_utilization'].columns
+g17_year_col = [x for x in g17_col if x.find('-') != -1]
+g17 = unstack(data['g17_industrial_production_and_cap_utilization'],g17_year_col)
+#summarize g17    
+sqlContext.registerDataFrameAsTable(g17, "g17")
+g17 = sqlContext.sql('''
+select 
+    avg(amt) as g17,
+    cast(substring(year,1,4) as int) as year 
+from g17 group by cast(substring(year,1,4) as int)''')
+sqlContext.registerDataFrameAsTable(g17, "g17")
 
-    #summarize gdp
-    gdp = data['gdp_by_year'].select('gdp_in_billions_of_2012_dollars','year')
-    gdp = gdp.withColumnRenamed('gdp_in_billions_of_2012_dollars','gdp')
-    sqlContext.registerDataFrameAsTable(gdp, "gdp")
-    gdp = sqlContext.sql('select gdp,cast(year as int) as year from gdp')
-    sqlContext.registerDataFrameAsTable(gdp, "gdp")
+#summarize gdp
+gdp = data['gdp_by_year'].select('gdp_in_billions_of_2012_dollars','year')
+gdp = gdp.withColumnRenamed('gdp_in_billions_of_2012_dollars','gdp')
+sqlContext.registerDataFrameAsTable(gdp, "gdp")
+gdp = sqlContext.sql('select gdp,cast(year as int) as year from gdp')
+sqlContext.registerDataFrameAsTable(gdp, "gdp")
 
-    #summarize consumer confidence index
-    cci = data['consumer_confidence_index'].select('TIME','Value')
-    sqlContext.registerDataFrameAsTable(cci, "cci")
-    cci = sqlContext.sql('''
-    select 
-        avg(Value) as cci,
-        cast(substring(TIME,1,4) as int) as year 
-    from cci group by cast(substring(TIME,1,4) as int)''')
-    sqlContext.registerDataFrameAsTable(cci, "cci")
+#summarize consumer confidence index
+cci = data['consumer_confidence_index'].select('TIME','Value')
+sqlContext.registerDataFrameAsTable(cci, "cci")
+cci = sqlContext.sql('''
+select 
+    avg(Value) as cci,
+    cast(substring(TIME,1,4) as int) as year 
+from cci group by cast(substring(TIME,1,4) as int)''')
+sqlContext.registerDataFrameAsTable(cci, "cci")
 
-    #summarize retail trade
-    retail = data['retail_trade']
-    sqlContext.registerDataFrameAsTable(retail, "retail")
-    retail = sqlContext.sql('''
-    select
-        sum(april+august+december+february+january+july+jun+march+may+november+october+september) as retail,
-        cast(year as int) as year
-    from retail group by cast(year as int)''')
-    sqlContext.registerDataFrameAsTable(retail, "retail")
+#summarize retail trade
+retail = data['retail_trade']
+sqlContext.registerDataFrameAsTable(retail, "retail")
+retail = sqlContext.sql('''
+select
+    sum(april+august+december+february+january+july+jun+march+may+november+october+september) as retail,
+    cast(year as int) as year
+from retail group by cast(year as int)''')
+sqlContext.registerDataFrameAsTable(retail, "retail")
 
-    #summarize cons_credit
-    cons_credit = data['consumer_credit']
-    cons_credit = cons_credit.withColumnRenamed("Nonrevolving consumer credit owned and securitized, seasonally adjusted level","nonrev")
-    cons_credit = cons_credit.withColumnRenamed("Revolving consumer credit owned and securitized, seasonally adjusted level","rev")
-    cons_credit = cons_credit.withColumnRenamed("Series Description","year")
-    sqlContext.registerDataFrameAsTable(cons_credit, "cons_credit")
-    cons_credit = sqlContext.sql('''
-    select 
-        sum(nonrev) as non_rev_cred,
-        sum(rev) as rev_cred,
-        cast(substring(year,1,4) as int) as year
-    from cons_credit group by cast(substring(year,1,4) as int)''')
-    sqlContext.registerDataFrameAsTable(cons_credit, "cons_credit")
+#summarize cons_credit
+cons_credit = data['consumer_credit']
+cons_credit = cons_credit.withColumnRenamed("Nonrevolving consumer credit owned and securitized, seasonally adjusted level","nonrev")
+cons_credit = cons_credit.withColumnRenamed("Revolving consumer credit owned and securitized, seasonally adjusted level","rev")
+cons_credit = cons_credit.withColumnRenamed("Series Description","year")
+sqlContext.registerDataFrameAsTable(cons_credit, "cons_credit")
+cons_credit = sqlContext.sql('''
+select 
+    sum(nonrev) as non_rev_cred,
+    sum(rev) as rev_cred,
+    cast(substring(year,1,4) as int) as year
+from cons_credit group by cast(substring(year,1,4) as int)''')
+sqlContext.registerDataFrameAsTable(cons_credit, "cons_credit")
 
-    #summarize median family income
-    mfi = data['median_family_income']
-    mfi = mfi.withColumnRenamed("total","mfi")
-    sqlContext.registerDataFrameAsTable(mfi, "mfi")
+#summarize median family income
+mfi = data['median_family_income']
+mfi = mfi.withColumnRenamed("total","mfi")
+sqlContext.registerDataFrameAsTable(mfi, "mfi")
 
-    summary = sqlContext.sql('''
-    select
-        gdp,gdp.year, --gdp
-        g17,
-        cci,
-        retail,
-        non_rev_cred,
-        rev_cred,
-        mfi
-    from gdp
-    left join g17 on g17.year = gdp.year
-    left join cci on cci.year = gdp.year
-    left join retail on retail.year = gdp.year
-    left join cons_credit on cons_credit.year = gdp.year
-    left join mfi on mfi.year = gdp.year
-    where gdp.year > 1999
-    ''')
-    summary.show()
-    summary.rdd.map(lambda x: ",".join(map(str, x))).coalesce(1).saveAsTextFile("/economic_health/summary.csv")
+summary = sqlContext.sql('''
+select
+    gdp,gdp.year, --gdp
+    g17,
+    cci,
+    retail,
+    non_rev_cred,
+    rev_cred,
+    mfi
+from gdp
+left join g17 on g17.year = gdp.year
+left join cci on cci.year = gdp.year
+left join retail on retail.year = gdp.year
+left join cons_credit on cons_credit.year = gdp.year
+left join mfi on mfi.year = gdp.year
+where gdp.year > 1999
+''')
+summary.show()
+
+#write file
+summary.rdd.map(lambda x: ",".join(map(str, x))).coalesce(1).saveAsTextFile("/economic_health/summary.csv")
+
+#write headers
+with open('headers.txt', 'w') as f:
+    for col in summary.columns:
+        f.write(col)
+        f.write(',')
