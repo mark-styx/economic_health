@@ -35,14 +35,14 @@ docker images
 #run environment
 docker run --hostname=cloudera-qs --privileged=true -t -i <image hash here> /usr/bin/docker-quickstart
 
-#return to host terminal and get container id
+#return to host terminal and get container id, d3179084bc43 in this case
 docker ps
 
 #drop files into container
-tar -cv * | docker exec -i <container id here> tar x -C /var/www
+tar -cv * | docker exec -i d3179084bc43 tar x -C /var/www
 
 #return to container terminal
-docker exec -it <container id> /bin/bash
+docker exec -it d3179084bc43 /bin/bash
 
 #check files
 cd economic_health ls
@@ -64,5 +64,5 @@ pyspark
 hadoop fs -get summary.csv /economic_health
 
 #copy summary files over to host
-sudo docker cp <container id>:/summary.csv /economic_health/summary.csv
-sudo docker cp <container id>:/headers.txt /economic_health/headers.txt
+sudo docker cp d3179084bc43:/summary.csv /home/docker_output/summary.csv
+sudo docker cp d3179084bc43:/headers.txt /home/docker_output/headers.txt
