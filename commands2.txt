@@ -1,17 +1,68 @@
+
+#get repository
 git clone https://github.com/meow1928/economic_health.git
 cd economic_health
+
+#install dependencies
+
+#python
+cd /usr/src
+wget https://www.python.org/ftp/python/3.6.9/Python-3.6.9.tgz
+tar xzf Python-3.6.9.tgz
+cd Python-3.6.9
+./configure --enable-optimizations
+make install
+python3.6 -V
+
 python3 -m pip install xlrd
-#python3 -m pip install pandas
-#python3 -m pip install requests
+python3 -m pip install pandas
+python3 -m pip install requests
+
+#docker
+sudo apt install docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+
+#execute script to retrieve data
 python3 pull_data.py
 
-files=/path/to/files/*.json
+#cloudera container
+docker pull cloudera/quickstart:latest
+
+#get image hash
+docker images
+
+#run environment
+docker run --hostname=cloudera-qs --privileged=true -t -i <image hash here> /usr/bin/docker-quickstart
+
+#return to host terminal and get container id
+docker ps
+
+#drop files into container
+tar -cv * | docker exec -i <container id here> tar x -C /var/www
+
+#return to container terminal
+docker exec -it <container id> /bin/bash
+
+#check files
+cd economic_health ls
+
+#load files to hdsf
+files=/economic_health/*.json
 for f in $files
 do
     echo "loading $f to hdfs..."
-    hadoop fs -put f
+    hadoop fs -put $f
     echo "$f loaded"
 echo "done."
 done
 
-/home/mark/hadoop-3.2.1-src/spark/bin/pyspark
+#open pyspark and copy 'summary.py' script
+pyspark
+
+#grab summary from hdfs
+hadoop fs -get summary.csv /economic_health
+
+#copy summary files over to host
+sudo docker cp <container id>:/summary.csv /economic_health/summary.csv
+sudo docker cp <container id>:/headers.txt /economic_health/headers.txt
